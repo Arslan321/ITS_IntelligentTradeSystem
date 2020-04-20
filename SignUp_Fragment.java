@@ -1,14 +1,6 @@
 package com.example.its;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.login_signup_screendesign_demo.R;
-
-import android.content.res.ColorStateList;
-import android.content.res.XmlResourceParser;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -19,6 +11,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import androidx.fragment.app.Fragment;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+
 public class SignUp_Fragment extends Fragment implements OnClickListener {
 	private static View view;
 	private static EditText fullName, emailId, mobileNumber, location,
@@ -26,6 +27,9 @@ public class SignUp_Fragment extends Fragment implements OnClickListener {
 	private static TextView login;
 	private static Button signUpButton;
 	private static CheckBox terms_conditions;
+	ApiInterface apiInterface;
+	Retrofit retrofit;
+
 
 	public SignUp_Fragment() {
 
@@ -35,6 +39,7 @@ public class SignUp_Fragment extends Fragment implements OnClickListener {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		view = inflater.inflate(R.layout.signup_layout, container, false);
+
 		initViews();
 		setListeners();
 		return view;
@@ -51,15 +56,15 @@ public class SignUp_Fragment extends Fragment implements OnClickListener {
 		signUpButton = (Button) view.findViewById(R.id.signUpBtn);
 		login = (TextView) view.findViewById(R.id.already_user);
 		terms_conditions = (CheckBox) view.findViewById(R.id.terms_conditions);
-
+		retrofit =ApiClient.getApiClient();
+		apiInterface = retrofit.create(ApiInterface.class);
 		// Setting text selector over textviews
-		XmlResourceParser xrp = getResources().getXml(R.drawable.text_selector);
+		//XmlResourceParser xrp = getResources().getXml(R.drawable.text_selector);
 		try {
-			ColorStateList csl = ColorStateList.createFromXml(getResources(),
-					xrp);
 
-			login.setTextColor(csl);
-			terms_conditions.setTextColor(csl);
+
+			login.setTextColor(getResources().getColor(R.color.white));
+			terms_conditions.setTextColor(getResources().getColor(R.color.white));
 		} catch (Exception e) {
 		}
 	}
@@ -82,7 +87,7 @@ public class SignUp_Fragment extends Fragment implements OnClickListener {
 		case R.id.already_user:
 
 			// Replace login fragment
-			new MainActivity().replaceLoginFragment();
+			new MainActivit2y().replaceLoginFragment();
 			break;
 		}
 
@@ -131,9 +136,27 @@ public class SignUp_Fragment extends Fragment implements OnClickListener {
 					"Please select Terms and Conditions.");
 
 		// Else do signup or do your stuff
-		else
-			Toast.makeText(getActivity(), "Do SignUp.", Toast.LENGTH_SHORT)
-					.show();
+		else {
 
+			apiInterface.saveNote(fullName.getText().toString().trim(), emailId.getText().toString().trim(), mobileNumber.getText().toString().trim(),
+					location.getText().toString().trim(), password.getText().toString().trim()).enqueue(new Callback<BasicResponse>() {
+				@Override
+				public void onResponse(Call<BasicResponse> call, Response<BasicResponse> response) {
+					BasicResponse basicResponse = response.body();
+					if (basicResponse != null) {
+						if (basicResponse.getSuccess()) {
+							Toast.makeText(getActivity(), basicResponse.getMessage(), Toast.LENGTH_SHORT).show();
+						} else {
+							Toast.makeText(getActivity(), basicResponse.getMessage(), Toast.LENGTH_SHORT).show();
+						}
+					}
+				}
+
+				@Override
+				public void onFailure(Call<BasicResponse> call, Throwable t) {
+					Toast.makeText(getActivity(), t.getMessage(), Toast.LENGTH_SHORT).show();
+				}
+			});
+		}
 	}
 }
